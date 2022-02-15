@@ -53,7 +53,7 @@ void setup()
     digitalWrite(LED_BUILTIN, HIGH);
 
     // Create the message queue
-    movementQueue = xQueueCreate(MOVEMENT_QUEUE_LENGTH, MOVEMENT_FILE_LENGTH_MAX);
+    //movementQueue = xQueueCreate(MOVEMENT_QUEUE_LENGTH, MOVEMENT_FILE_LENGTH_MAX);
 
     // Open serial communications and wait for port to open:
     Serial.begin(19200);
