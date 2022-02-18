@@ -7,7 +7,6 @@
 #include <ArduinoJson.h>
 #include <WiFi.h>
 #include <ESPmDNS.h>
-#include <DFRobotDFPlayerMini.h>
 
 #include "esp_system.h"
 #include "esp_event.h"
@@ -35,6 +34,8 @@ extern "C"
 #include "mdns/creature-mdns.h"
 #include "mdns/magicbroker.h"
 
+#include "DFRobot_DF1201S.h"
+
 using namespace creatures;
 
 static const char *TAG = "Main";
@@ -53,7 +54,7 @@ void setup()
     digitalWrite(LED_BUILTIN, HIGH);
 
     // Create the message queue
-    //movementQueue = xQueueCreate(MOVEMENT_QUEUE_LENGTH, MOVEMENT_FILE_LENGTH_MAX);
+    // movementQueue = xQueueCreate(MOVEMENT_QUEUE_LENGTH, MOVEMENT_FILE_LENGTH_MAX);
 
     // Open serial communications and wait for port to open:
     Serial.begin(19200);
@@ -98,32 +99,23 @@ void setup()
     mqtt.startHeartbeat();
 
     // Testing the audio!
-    Serial1.begin(9600, SERIAL_8N1, 16, 17);
-    //while (!Serial1)
-    //    ;
-    //delay(2000);
-    //ESP_LOGD(TAG, "Talking to Serial1...");
-    //
-    //for (;;)
-    //{
-    //    Serial1.println("hi hotot!");
-    //}
+    Serial1.begin(115200, SERIAL_8N1, 16, 17);
+    while (!Serial1)
+        ;
 
+    delay(2000);
+    ESP_LOGI(TAG, "Serial1 open");
 
-    DFRobotDFPlayerMini myDFPlayer;
-
-    ESP_LOGD(TAG, "DFRobot DFPlayer Mini Demo");
-    ESP_LOGD(TAG, "Initializing DFPlayer ... (May take 3~5 seconds)");
-
-    if (!myDFPlayer.begin(Serial1))
+    DFRobot_DF1201S DF1201S;
+    while (!DF1201S.begin(Serial1))
     {
-        ESP_LOGE(TAG, "Unable to begin:");
-        ESP_LOGE(TAG, "1.Please recheck the connection!");
-        ESP_LOGE(TAG, "2.Please insert the SD card!");
-        while (true)
-            ;
+        ESP_LOGE(TAG, "Init failed, please check the wire connection!");
+        delay(1000);
     }
-    ESP_LOGD(TAG, "DFPlayer Mini online.");
+
+    DF1201S.setVol(20);
+    ESP_LOGD(TAG, "VOL: %d", DF1201S.getVol());
+    ESP_LOGD(TAG, "Currently Playing: %s", DF1201S.getFileName());
 }
 
 void loop()
@@ -159,28 +151,6 @@ void onMqttMessage(char *topic, char *payload, AsyncMqttClientMessageProperties 
     {
         ESP_LOGI(TAG, "command: %s", doc["cmd"].as<String>());
     }
-
-#ifdef CREATURE_DEBUG
-
-    Serial.println("Message received:");
-    Serial.print("  topic: ");
-    Serial.println(topic);
-    Serial.print("  payload: ");
-    Serial.println(payload_string);
-    Serial.print("  qos: ");
-    Serial.println(properties.qos);
-    Serial.print("  dup: ");
-    Serial.println(properties.dup);
-    Serial.print("  retain: ");
-    Serial.println(properties.retain);
-    Serial.print("  len: ");
-    Serial.println(len);
-    Serial.print("  index: ");
-    Serial.println(index);
-    Serial.print("  total: ");
-    Serial.println(total);
-
-#endif
 
     digitalWrite(LED_BUILTIN, LOW);
 }
